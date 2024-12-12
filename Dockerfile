@@ -1,4 +1,4 @@
-# Use a imagem oficial do Maven para construir a aplicação
+# Etapa 1: Construir a aplicação usando Maven
 FROM maven:3.8.4-openjdk-17 AS build
 WORKDIR /app
 
@@ -10,11 +10,11 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Use uma imagem oficial do OpenJDK 17 da Oracle como base para a execução
+# Etapa 2: Criar a imagem final usando OpenJDK
 FROM openjdk:17-jdk-oracle
 WORKDIR /app
 
-# Copie o jar construído da fase anterior
+# Copiar o jar construído da fase anterior
 COPY --from=build /app/target/java-ambev-1.0-SNAPSHOT.jar /app/java-ambev.jar
 
 # Exponha a porta 8080

@@ -1,5 +1,6 @@
 package br.com.desafio.ambev.domain.entity;
 
+
 import lombok.Data;
 
 import javax.persistence.*;
@@ -7,7 +8,7 @@ import java.io.Serializable;
 
 @Entity
 @Data
-@Table(name = "ORDER")
+@Table(name = "ORDERS")
 public class Order implements Serializable {
 
     @Id
