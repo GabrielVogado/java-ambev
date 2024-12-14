@@ -1,13 +1,20 @@
 package br.com.desafio.ambev.domain.entity;
 
 
-import lombok.Data;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "ORDERS")
 public class Order implements Serializable {
 
@@ -24,5 +31,8 @@ public class Order implements Serializable {
 
     @Column(name = "PRICE")
     private double price;
+
+    @Column(name = "TOTAL_PRICE")
+    private Double totalPrice;
 
 }
