@@ -6,8 +6,12 @@ import java.util.List;
 
 public interface IOrderService {
 
-    List<Order> getAllOrders();
+    Order criarPedido(Order pedido);
 
-    Order saveOrder(Order order);
+    Order atualizarPedido(Long id, Order pedidoAtualizado);
+
+    void deletarPedido(Long id);
+
+    List<Order> listarPedidos();
 }
 
