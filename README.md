@@ -20,11 +20,33 @@ Este projeto é um exemplo de uma aplicação de gestão de pedidos utilizando S
 - **PostgreSQL:** Banco de dados utilizado para armazenamento dos pedidos.
 - **Docker:** Utilizado para containerização da aplicação e seus serviços.
 
-## Estrutura do Projeto
+## Estrutura do Projeto (Baseada em DDD)
 
-- **Controller:** Contém os endpoints da API.
-- **Service:** Contém a lógica de negócio para gestão dos pedidos.
-- **Infrastructure:** Contém testes e integração com Kafka.
+###  **Domain**
+- **Entidades:** Representam objetos de domínio que possuem uma identidade distinta.
+    - `Order`: Representa um pedido com atributos como ID, nome e descrição.
+- **Exceções:** Tratamento de exceções específicas do domínio.
+    - `PedidoNotFoundException`: Exceção lançada quando um pedido não é encontrado.
+- **Repositórios:** Interfaces que definem os métodos de acesso ao banco de dados.
+    - `OrderRepository`: Interface para operações de CRUD relacionadas aos pedidos.
+
+###  **Application**
+- **Serviços de Aplicação:** Contêm a lógica de negócio e coordenação entre diferentes partes do sistema.
+    - `IOrderService`: Interface que define métodos de operações de negócio relacionados aos pedidos.
+    - `OrderServiceImpl`: Implementação de `IOrderService` que contém a lógica de negócio dos pedidos.
+
+### **Infrastructure**
+
+- **Configurações:** Arquivos de configuração e setup do projeto.
+    - `KafkaProducerServiceConfig`: Configuração do Kafka para produção de mensagens.
+    - `OpenApiConfig`: Configuração do Swagger para documentação da API.
+    - `SecurityConfig`: Configurações de segurança da aplicação.
+
+### **Web**
+- **Controladores:** Classes responsáveis por expor os endpoints da aplicação.
+    - `OrderController`: Define os endpoints para criar, listar, atualizar e deletar pedidos.
+- **Documentação:** Classes responsáveis pela documentação da API.
+    - `OrderDocumentation`: Define a documentação dos endpoints da `OrderController`.
 
 ## Configuração e Execução
 
@@ -37,8 +59,8 @@ Este projeto é um exemplo de uma aplicação de gestão de pedidos utilizando S
 1. **Clone o Repositório:**
 
    ```bash
-   git clone https://github.com/seu-usuario/seu-repositorio.git
-   cd seu-repositorio
+   git clone https://github.com/GabrielVogado/java-ambev.git
+   cd java-ambev
    ```
 
 2. **Construa e Inicie os Contêineres:**
@@ -121,3 +143,5 @@ Utilize os endpoints fornecidos para testar a criação, listagem, atualização
 ## Contribuições
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e enviar pull requests.
+
+
