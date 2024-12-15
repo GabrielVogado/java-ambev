@@ -46,6 +46,16 @@ class OrderServiceImplTest {
     }
 
     @Test
+    void criarPedidoComErro() {
+        Order order = new Order();
+        when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("Erro simulado"));
+
+        assertThrows(RuntimeException.class, () -> orderService.criarPedido(order));
+
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+    }
+
+    @Test
     void listarPedidos() {
         List<Order> orders = Arrays.asList(new Order(), new Order());
         when(orderRepository.findAll()).thenReturn(orders);
@@ -54,6 +64,15 @@ class OrderServiceImplTest {
 
         assertEquals(orders, result);
         verify(orderRepository, times(1)).findAll();
+    }
+
+    @Test
+    void listarPedidosComErro() {
+        when(orderRepository.findAll()).thenThrow(new RuntimeException("Erro simulado"));
+
+        assertThrows(RuntimeException.class, () -> orderService.listarPedidos());
+
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
     }
 
     @Test
@@ -73,13 +92,23 @@ class OrderServiceImplTest {
     }
 
     @Test
+    void atualizarPedidoComErro() {
+        Long id = 1L;
+        when(orderRepository.findById(eq(id))).thenThrow(new RuntimeException("Erro simulado"));
+
+        assertThrows(RuntimeException.class, () -> orderService.atualizarPedido(id, new Order()));
+
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+    }
+
+    @Test
     void atualizarPedidoNotFound() {
         Long id = 1L;
         when(orderRepository.findById(eq(id))).thenReturn(Optional.empty());
 
-        assertThrows(PedidoNotFoundException.class, () -> {
-            orderService.atualizarPedido(id, new Order());
-        });
+        assertThrows(PedidoNotFoundException.class, () -> orderService.atualizarPedido(id, new Order()));
+
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
     }
 
     @Test
@@ -90,5 +119,15 @@ class OrderServiceImplTest {
 
         verify(orderRepository, times(1)).deleteById(id);
         verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-service"), anyString());
+    }
+
+    @Test
+    void deletarPedidoComErro() {
+        Long id = 1L;
+        doThrow(new RuntimeException("Erro simulado")).when(orderRepository).deleteById(id);
+
+        assertThrows(RuntimeException.class, () -> orderService.deletarPedido(id));
+
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
     }
 }
