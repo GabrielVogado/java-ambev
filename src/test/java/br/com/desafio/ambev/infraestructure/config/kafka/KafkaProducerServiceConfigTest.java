@@ -1,6 +1,5 @@
-package br.com.desafio.ambev.infraestructure.config;
+package br.com.desafio.ambev.infraestructure.config.kafka;
 
-import br.com.desafio.ambev.infraestructure.config.kafka.KafkaProducerServiceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -31,7 +30,17 @@ class KafkaProducerServiceConfigTest {
         String mensagem = "test-message";
 
         kafkaProducerServiceConfig.enviarMensagem(topico, mensagem);
+        kafkaProducerServiceConfig.enviarMensagem(topico, mensagem);
+        kafkaProducerServiceConfig.enviarMensagem(topico, mensagem);
 
-        verify(kafkaTemplate, times(1)).send(eq(topico), eq(mensagem));
+        verify(kafkaTemplate, times(3)).send(eq(topico), eq(mensagem));
+        verify(kafkaTemplate, times(1)).send(eq("error-reprocessing"), eq("Erro reprocessado"));
+    }
+
+    @Test
+    void reprocessarErro() {
+        kafkaProducerServiceConfig.enviarMensagem("error-reprocessing", "Erro reprocessado");
+
+        verify(kafkaTemplate, times(1)).send(eq("error-reprocessing"), eq("Erro reprocessado"));
     }
 }
