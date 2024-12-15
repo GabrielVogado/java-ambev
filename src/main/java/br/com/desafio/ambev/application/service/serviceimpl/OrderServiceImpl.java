@@ -16,6 +16,7 @@ public class OrderServiceImpl implements IOrderService {
 
     private final OrderRepository orderRepository;
     private final KafkaProducerServiceConfig kafkaProducerServiceConfig;
+    private final String TOPIC_ORDER_SERVICE  = "order-service";
 
     @Autowired
     public OrderServiceImpl(OrderRepository orderRepository, KafkaProducerServiceConfig kafkaProducerServiceConfig) {
@@ -26,7 +27,7 @@ public class OrderServiceImpl implements IOrderService {
     public Order criarPedido(Order order) {
         order.setTotalPrice(order.getQuantity() * order.getPrice());
         Order saveOrder = orderRepository.save(order);
-        kafkaProducerServiceConfig.enviarMensagem("order", "Pedido criado: " + saveOrder.getId());
+        kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_SERVICE, "Pedido criado: " + saveOrder.getId());
         return saveOrder;
     }
 
@@ -42,7 +43,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setQuantity(orderUpdate.getQuantity());
             order.setPrice(orderUpdate.getPrice());
             order.setTotalPrice(order.getQuantity() * order.getPrice());
-            kafkaProducerServiceConfig.enviarMensagem("order", "Pedido atualizado: " + order.getId());
+            kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_SERVICE, "Pedido atualizado: " + order.getId());
             return orderRepository.save(order);
         } else {
             throw new PedidoNotFoundException("Pedido não encontrado");
@@ -51,7 +52,7 @@ public class OrderServiceImpl implements IOrderService {
 
     public void deletarPedido(Long id) {
         orderRepository.deleteById(id);
-        kafkaProducerServiceConfig.enviarMensagem("order", "Pedido deletado: " + id);
+        kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_SERVICE, "Pedido deletado: " + id);
     }
 
 }
