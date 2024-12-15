@@ -27,8 +27,7 @@ public class KafkaProducerServiceConfig {
     }
 
     private void reprocessarErro() {
-        // Lógica para pegar uma mensagem da fila de erro e reprocessá-la
-        // Simulação de reprocessamento de erro
+
         String mensagemErroReprocessada = "Erro reprocessado";
         try {
             kafkaTemplate.send(TOPIC_ERROR_REPROCESSING, mensagemErroReprocessada);
