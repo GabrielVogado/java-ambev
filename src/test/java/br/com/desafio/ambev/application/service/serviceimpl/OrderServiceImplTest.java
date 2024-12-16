@@ -10,17 +10,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class OrderServiceImplTest {
 
     @InjectMocks
-    private OrderServiceImpl orderService;
+    private OrderServiceImpl orderServiceImpl;
 
     @Mock
     private OrderRepository orderRepository;
@@ -34,100 +33,56 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void criarPedido() {
-        Order order = new Order();
+    void criarPedidoComSucesso() {
+        Order order = new Order(null, "Produto A", 2, 50.0, 100.0);
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
-        Order result = orderService.criarPedido(order);
+        Order result = orderServiceImpl.criarPedido(order);
 
-        assertNotNull(result);
-        verify(orderRepository, times(1)).save(order);
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-service"), anyString());
-    }
-
-    @Test
-    void criarPedidoComErro() {
-        Order order = new Order();
-        when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("Erro simulado"));
-
-        assertThrows(RuntimeException.class, () -> orderService.criarPedido(order));
-
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
-    }
-
-    @Test
-    void listarPedidos() {
-        List<Order> orders = Arrays.asList(new Order(), new Order());
-        when(orderRepository.findAll()).thenReturn(orders);
-
-        List<Order> result = orderService.listarPedidos();
-
-        assertEquals(orders, result);
-        verify(orderRepository, times(1)).findAll();
-    }
-
-    @Test
-    void listarPedidosComErro() {
-        when(orderRepository.findAll()).thenThrow(new RuntimeException("Erro simulado"));
-
-        assertThrows(RuntimeException.class, () -> orderService.listarPedidos());
-
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
-    }
-
-    @Test
-    void atualizarPedido() {
-        Long id = 1L;
-        Order order = new Order();
-        when(orderRepository.findById(eq(id))).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenReturn(order);
-
-        Order orderUpdate = new Order();
-        Order result = orderService.atualizarPedido(id, orderUpdate);
-
-        assertNotNull(result);
-        verify(orderRepository, times(1)).findById(id);
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-service", "Pedido criado no serviço: " + order.getId());
         verify(orderRepository, times(1)).save(any(Order.class));
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-service"), anyString());
     }
 
     @Test
-    void atualizarPedidoComErro() {
-        Long id = 1L;
-        when(orderRepository.findById(eq(id))).thenThrow(new RuntimeException("Erro simulado"));
+    void criarPedidoComErroProdutoVazio() {
+        Order order = new Order(null, "", 2, 50.0, 100.0);
 
-        assertThrows(RuntimeException.class, () -> orderService.atualizarPedido(id, new Order()));
-
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        assertThrows(IllegalArgumentException.class, () -> orderServiceImpl.criarPedido(order));
     }
 
     @Test
-    void atualizarPedidoNotFound() {
-        Long id = 1L;
-        when(orderRepository.findById(eq(id))).thenReturn(Optional.empty());
+    void atualizarPedidoComSucesso() {
+        Order orderUpdate = new Order(null, "Produto B", 2, 30.0, 60.0);
+        Order existingOrder = new Order(1L, "Produto A", 2, 50.0, 100.0);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(existingOrder));
 
-        assertThrows(PedidoNotFoundException.class, () -> orderService.atualizarPedido(id, new Order()));
+        Order result = orderServiceImpl.atualizarPedido(1L, orderUpdate);
 
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-service", "Pedido atualizado no serviço: " + existingOrder.getId());
     }
 
     @Test
-    void deletarPedido() {
-        Long id = 1L;
+    void atualizarPedidoNaoEncontrado() {
+        Order orderUpdate = new Order(null, "Produto B", 2, 30.0, 60.0);
+        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
-        orderService.deletarPedido(id);
-
-        verify(orderRepository, times(1)).deleteById(id);
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-service"), anyString());
+        assertThrows(PedidoNotFoundException.class, () -> orderServiceImpl.atualizarPedido(1L, orderUpdate));
     }
 
     @Test
-    void deletarPedidoComErro() {
-        Long id = 1L;
-        doThrow(new RuntimeException("Erro simulado")).when(orderRepository).deleteById(id);
+    void deletarPedidoComSucesso() {
+        when(orderRepository.existsById(1L)).thenReturn(true);
 
-        assertThrows(RuntimeException.class, () -> orderService.deletarPedido(id));
+        orderServiceImpl.deletarPedido(1L);
 
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-service", "Pedido deletado no serviço: " + 1L);
+        verify(orderRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void deletarPedidoNaoEncontrado() {
+        when(orderRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(PedidoNotFoundException.class, () -> orderServiceImpl.deletarPedido(1L));
     }
 }

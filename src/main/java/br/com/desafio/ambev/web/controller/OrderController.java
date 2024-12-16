@@ -2,6 +2,7 @@ package br.com.desafio.ambev.web.controller;
 
 import br.com.desafio.ambev.application.service.IOrderService;
 import br.com.desafio.ambev.domain.entity.Order;
+import br.com.desafio.ambev.domain.exception.PedidoNotFoundException;
 import br.com.desafio.ambev.infraestructure.config.kafka.KafkaProducerServiceConfig;
 import br.com.desafio.ambev.web.documentation.OrderDocumentation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class OrderController implements OrderDocumentation {
             Order novoPedido = orderService.criarPedido(pedido);
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_CONTROLLER, "Pedido criado no controlador: " + novoPedido.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(novoPedido);
+        } catch (IllegalArgumentException e) {
+            kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro de Validação ao criar pedido no controlador: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         } catch (Exception e) {
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro ao criar pedido no controlador: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -56,6 +60,12 @@ public class OrderController implements OrderDocumentation {
             Order pedido = orderService.atualizarPedido(id, pedidoAtualizado);
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_CONTROLLER, "Pedido atualizado no controlador: " + pedido.getId());
             return ResponseEntity.ok(pedido);
+        } catch (IllegalArgumentException e) {
+            kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro de Validação ao atualizar pedido no controlador: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (PedidoNotFoundException e) {
+            kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro ao atualizar pedido no controlador: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro ao atualizar pedido no controlador: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -68,6 +78,9 @@ public class OrderController implements OrderDocumentation {
             orderService.deletarPedido(id);
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_CONTROLLER, "Pedido deletado no controlador: " + id);
             return ResponseEntity.noContent().build();
+        } catch (PedidoNotFoundException e) {
+            kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Pedifo Não Encontrado: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ERROR, "Erro ao deletar pedido no controlador: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

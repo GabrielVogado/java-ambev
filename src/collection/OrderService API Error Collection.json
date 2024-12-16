@@ -1,0 +1,202 @@
+{
+    "info": {
+        "name": "AmbevCollection",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Criar Pedido - Erro Produto Vazio",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"\", \"quantity\": 1, \"price\": 10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Criar Pedido - Erro Quantidade Negativa",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"Produto X\", \"quantity\": -1, \"price\": 10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Criar Pedido - Erro Preço Negativo",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"Produto X\", \"quantity\": 1, \"price\": -10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Listar Pedidos - Erro",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{url}}/orders",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Atualizar Pedido - Erro Produto Vazio",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"\", \"quantity\": 1, \"price\": 10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders/1",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders",
+                        "1"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Atualizar Pedido - Erro Quantidade Negativa",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"Produto X\", \"quantity\": -1, \"price\": 10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders/1",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders",
+                        "1"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Atualizar Pedido - Erro Preço Negativo",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{ \"product\": \"Produto X\", \"quantity\": 1, \"price\": -10.0 }"
+                },
+                "url": {
+                    "raw": "{{url}}/orders/1",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders",
+                        "1"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Deletar Pedido - Erro",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{url}}/orders/999",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "orders",
+                        "999"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}
