@@ -2,6 +2,7 @@ package br.com.desafio.ambev.web.controller;
 
 import br.com.desafio.ambev.application.service.IOrderService;
 import br.com.desafio.ambev.domain.entity.Order;
+import br.com.desafio.ambev.domain.exception.PedidoNotFoundException;
 import br.com.desafio.ambev.infraestructure.config.kafka.KafkaProducerServiceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class OrderControllerTest {
@@ -34,95 +36,81 @@ class OrderControllerTest {
     }
 
     @Test
-    void criarPedido() {
-        Order order = new Order();
+    void criarPedidoComSucesso() {
+        Order order = new Order(null, "Produto A", 2, 50.0, 100.0);
         when(orderService.criarPedido(any(Order.class))).thenReturn(order);
 
         ResponseEntity<Order> response = orderController.criarPedido(order);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(order, response.getBody());
-        verify(orderService, times(1)).criarPedido(order);
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-controller"), anyString());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-controller", "Pedido criado no controlador: " + order.getId());
     }
 
     @Test
     void criarPedidoComErro() {
-        when(orderService.criarPedido(any(Order.class))).thenThrow(new RuntimeException("Erro simulado"));
+        Order order = new Order(null, "", 2, 50.0, 100.0);
+        doThrow(new IllegalArgumentException("Produto não pode ser nulo, vazio ou em branco")).when(orderService).criarPedido(any(Order.class));
 
-        ResponseEntity<Order> response = orderController.criarPedido(new Order());
+        ResponseEntity<Order> response = orderController.criarPedido(order);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("error", "Erro ao criar pedido no controlador: Produto não pode ser nulo, vazio ou em branco");
     }
 
     @Test
-    void listarPedidos() {
-        List<Order> orders = Arrays.asList(new Order(), new Order());
-        when(orderService.listarPedidos()).thenReturn(orders);
+    void listarPedidosComSucesso() {
+        List<Order> pedidos = Arrays.asList(
+                new Order(1L, "Produto A", 2, 50.0, 100.0),
+                new Order(2L, "Produto B", 1, 30.0, 30.0)
+        );
+        when(orderService.listarPedidos()).thenReturn(pedidos);
 
         ResponseEntity<List<Order>> response = orderController.listarPedidos();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(orders, response.getBody());
-        verify(orderService, times(1)).listarPedidos();
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-controller"), anyString());
+        assertEquals(pedidos, response.getBody());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-controller", "Pedidos listados no controlador");
     }
 
     @Test
-    void listarPedidosComErro() {
-        when(orderService.listarPedidos()).thenThrow(new RuntimeException("Erro simulado"));
+    void atualizarPedidoComSucesso() {
+        Order orderUpdate = new Order(null, "Produto B", 2, 30.0, 60.0);
+        Order updatedOrder = new Order(1L, "Produto B", 2, 30.0, 60.0);
+        when(orderService.atualizarPedido(eq(1L), any(Order.class))).thenReturn(updatedOrder);
 
-        ResponseEntity<List<Order>> response = orderController.listarPedidos();
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
-    }
-
-    @Test
-    void atualizarPedido() {
-        Long id = 1L;
-        Order order = new Order();
-        when(orderService.atualizarPedido(eq(id), any(Order.class))).thenReturn(order);
-
-        ResponseEntity<Order> response = orderController.atualizarPedido(id, order);
+        ResponseEntity<Order> response = orderController.atualizarPedido(1L, orderUpdate);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(order, response.getBody());
-        verify(orderService, times(1)).atualizarPedido(eq(id), eq(order));
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-controller"), anyString());
+        assertEquals(updatedOrder, response.getBody());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-controller", "Pedido atualizado no controlador: " + updatedOrder.getId());
     }
 
     @Test
     void atualizarPedidoComErro() {
-        Long id = 1L;
-        when(orderService.atualizarPedido(eq(id), any(Order.class))).thenThrow(new RuntimeException("Erro simulado"));
+        Order orderUpdate = new Order(null, "", 2, 50.0, 100.0);
+        doThrow(new IllegalArgumentException("Produto não pode ser nulo, vazio ou em branco")).when(orderService).atualizarPedido(eq(1L), any(Order.class));
 
-        ResponseEntity<Order> response = orderController.atualizarPedido(id, new Order());
+        ResponseEntity<Order> response = orderController.atualizarPedido(1L, orderUpdate);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("error", "Erro ao atualizar pedido no controlador: Produto não pode ser nulo, vazio ou em branco");
     }
 
     @Test
-    void deletarPedido() {
-        Long id = 1L;
-
-        ResponseEntity<Void> response = orderController.deletarPedido(id);
+    void deletarPedidoComSucesso() {
+        ResponseEntity<Void> response = orderController.deletarPedido(1L);
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(orderService, times(1)).deletarPedido(id);
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("order-controller"), anyString());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("order-controller", "Pedido deletado no controlador: " + 1L);
     }
 
     @Test
-    void deletarPedidoComErro() {
-        Long id = 1L;
-        doThrow(new RuntimeException("Erro simulado")).when(orderService).deletarPedido(id);
+    void deletarPedidoNaoEncontrado() {
+        doThrow(new PedidoNotFoundException("Pedido não encontrado")).when(orderService).deletarPedido(999L);
 
-        ResponseEntity<Void> response = orderController.deletarPedido(id);
+        ResponseEntity<Void> response = orderController.deletarPedido(999L);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem(eq("error"), anyString());
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(kafkaProducerServiceConfig, times(1)).enviarMensagem("error", "Erro ao deletar pedido no controlador: Pedido não encontrado");
     }
 }

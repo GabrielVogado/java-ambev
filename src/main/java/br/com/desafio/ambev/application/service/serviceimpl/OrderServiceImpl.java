@@ -27,6 +27,7 @@ public class OrderServiceImpl implements IOrderService {
 
     public Order criarPedido(Order order) {
         try {
+            validarPedido(order);
             order.setTotalPrice(order.getQuantity() * order.getPrice());
             Order saveOrder = orderRepository.save(order);
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_SERVICE, "Pedido criado no serviço: " + saveOrder.getId());
@@ -48,6 +49,7 @@ public class OrderServiceImpl implements IOrderService {
 
     public Order atualizarPedido(Long id, Order orderUpdate) {
         try {
+            validarPedido(orderUpdate);
             Optional<Order> optionalPedido = orderRepository.findById(id);
             if (optionalPedido.isPresent()) {
                 Order order = optionalPedido.get();
@@ -68,6 +70,9 @@ public class OrderServiceImpl implements IOrderService {
 
     public void deletarPedido(Long id) {
         try {
+            if (!orderRepository.existsById(id)) {
+                throw new PedidoNotFoundException("Pedido não encontrado");
+            }
             orderRepository.deleteById(id);
             kafkaProducerServiceConfig.enviarMensagem(TOPIC_ORDER_SERVICE, "Pedido deletado no serviço: " + id);
         } catch (Exception exception) {
@@ -75,4 +80,26 @@ public class OrderServiceImpl implements IOrderService {
             throw exception;
         }
     }
+
+    private void validarPedido(Order order) {
+        if (order == null) {
+            throw new IllegalArgumentException("Pedido não pode ser nulo");
+        }
+        if (order.getProduct() == null || order.getProduct().trim().isEmpty()) {
+            throw new IllegalArgumentException("Produto não pode ser nulo, vazio ou em branco");
+        }
+        if (order.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
+        if (order.getPrice() <= 0) {
+            throw new IllegalArgumentException("Preço deve ser maior que zero");
+        }
+        // Preço total deve ser recalculado com base na quantidade e no preço unitário
+        double totalPrice = order.getQuantity() * order.getPrice();
+        if (totalPrice <= 0) {
+            throw new IllegalArgumentException("Preço total deve ser maior que zero");
+        }
+        order.setTotalPrice(totalPrice);
+    }
+
 }
